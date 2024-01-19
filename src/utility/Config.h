@@ -18,8 +18,8 @@
     #define M5STACK
     #define M5CORE
     #define ILI9341_DRIVER
-    #define SPI_FREQUENCY      40000000
-    #define SPI_READ_FREQUENCY 20000000
+    #define SPI_FREQUENCY      10000000
+    #define SPI_READ_FREQUENCY 10000000
     #define DEFAULT_ROTATION   1
     #define TFT_SDA_READ
 

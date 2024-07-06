@@ -2,6 +2,7 @@
   #define K46BAT_H
   #ifndef ARDUINO_M5Stack_Core_ESP32
   #include <Arduino.h>
+  #include "utility/Config.h"
 
   #define VBAT_TEST_ON  HIGH
   #define VBAT_TEST_OFF LOW

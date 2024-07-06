@@ -166,7 +166,7 @@
       #include "drivers/M5x/Button/Button.h"
       //#include "drivers/M35/LTC2943/LTC2943.h"
       #include "drivers/M35/MAX7315/MAX7315.h"
-      #include "drivers/M5x/WM8978/WM8978.h"
+      //#include "drivers/M5x/WM8978/WM8978.h"
       #include "SD.h"
       #include "FS.h"
     #elif defined (ARDUINO_D1_MINI32)     //K36
@@ -281,7 +281,7 @@
           AXP192 Axp = AXP192();
           //LTC2943 Bat;
           MAX7315 Ioe = MAX7315(/*MAX7315_I2C_ADDRESS*/);
-          WM8978 Dac;
+          //WM8978 Dac;
           void powerOFF() { Ioe.powerOff(); } //For M5ez-demo
         #elif defined (ARDUINO_D1_MINI32)     //K36
           LTC2942 Bat;

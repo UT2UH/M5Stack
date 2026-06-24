@@ -15,27 +15,24 @@
  *----------------------------------------------------------------------*/
 
 #include "Button.h"
+#include <Arduino.h>
 
 /*----------------------------------------------------------------------*
- * HWButton(pin, puEnable, invert, dbTime) instantiates a button object.*
+ * ButtonGeneral(pin, puEnable, invert, dbTime) instantiates a button object.*
  * pin      Is the Arduino pin the button is connected to.              *
  * puEnable Enables the AVR internal pullup resistor if != 0 (can also  *
  *          use true or false).                                         *
  * invert   If invert == 0, interprets a high state as pressed, low as  *
  *          released. If invert != 0, interprets a high state as        *
  *          released, low as pressed  (can also use true or false).     *
- * dbTime   Is the debounce time in milliseconds.                       *
  *                                                                      *
  * (Note that invert cannot be implied from puEnable since an external  *
  *  pullup could be used.)                                              *
  *----------------------------------------------------------------------*/
-HWButton::HWButton(uint8_t pin, uint8_t invert, uint32_t dbTime) {
+ButtonGeneral::ButtonGeneral(uint8_t pin, uint8_t invert) {
   _pin = pin;
   _invert = invert;
-  _dbTime = dbTime;
-  pinMode(_pin, INPUT_PULLUP);
-  _state = digitalRead(_pin);
-  if (_invert != 0) _state = !_state;
+  _state = invert;
   _time = millis();
   _lastState = _state;
   _changed = 0;
@@ -43,6 +40,17 @@ HWButton::HWButton(uint8_t pin, uint8_t invert, uint32_t dbTime) {
   _lastTime = _time;
   _lastChange = _time;
   _pressTime = _time;
+}
+
+
+/*----------------------------------------------------------------------*
+ * dbTime   Is the debounce time in milliseconds.                       *
+ *----------------------------------------------------------------------*/
+HWButton::HWButton(uint8_t pin, uint8_t invert, uint32_t dbTime) : ButtonGeneral(pin, invert) {
+  _dbTime = dbTime;
+  pinMode(_pin, INPUT_PULLUP);
+  _state = digitalRead(_pin);
+  if (_invert != 0) _state = !_state;
 }
 
 /*----------------------------------------------------------------------*
@@ -54,7 +62,7 @@ uint8_t HWButton::read(void) {
   static uint8_t pinVal;
 
   ms = millis();
-  #if defined (ARDUINO_ESP32_DEV) || defined (ARDUINO_FROG_ESP32) || defined (ARDUINO_WESP32)  // K46v4 || K46v1
+  #if defined (ARDUINO_ESP32_DEV_UNUSED) || defined (ARDUINO_FROG_ESP32) || defined (ARDUINO_WESP32)  // K46v4 || K46v1
     pinVal = digitalRead(_pin);
   #else
     pinVal = analogRead(_pin);
@@ -88,12 +96,12 @@ uint8_t HWButton::read(void) {
  * read, and return false (0) or true (!=0) accordingly.                *
  * These functions do not cause the button to be read.                  *
  *----------------------------------------------------------------------*/
-uint8_t HWButton::isPressed(void) {
-  return _state == 0 ? 0 : 1;
+uint8_t ButtonGeneral::isPressed(void) {
+  return _state != _invert;
 }
 
-uint8_t HWButton::isReleased(void) {
-  return _state == 0 ? 1 : 0;
+uint8_t ButtonGeneral::isReleased(void) {
+  return _state == _invert;
 }
 
 /*----------------------------------------------------------------------*
@@ -102,17 +110,17 @@ uint8_t HWButton::isReleased(void) {
  * true (!=0) accordingly.                                              *
  * These functions do not cause the button to be read.                  *
  *----------------------------------------------------------------------*/
-uint8_t HWButton::wasPressed(void) {
-  return _state && _changed;
+uint8_t ButtonGeneral::wasPressed(void) {
+  return isPressed() && _changed;
 }
 
-uint8_t HWButton::wasReleased(void) {
-  return !_state && _changed && millis() - _pressTime < _hold_time;
+uint8_t ButtonGeneral::wasReleased(void) {
+  return isReleased() && _changed && (millis() - _pressTime < _hold_time);
 }
 
-uint8_t HWButton::wasReleasefor(uint32_t ms) {
+uint8_t ButtonGeneral::wasReleasefor(uint32_t ms) {
   _hold_time = ms;
-  return !_state && _changed && millis() - _pressTime >= ms;
+  return isReleased() && _changed && (millis() - _pressTime >= ms);
 }
 /*----------------------------------------------------------------------*
  * pressedFor(ms) and releasedFor(ms) check to see if the button is     *
@@ -120,25 +128,25 @@ uint8_t HWButton::wasReleasefor(uint32_t ms) {
  * time in milliseconds. Returns false (0) or true (1) accordingly.     *
  * These functions do not cause the button to be read.                  *
  *----------------------------------------------------------------------*/
-uint8_t HWButton::pressedFor(uint32_t ms) {
-  return (_state == 1 && _time - _lastChange >= ms) ? 1 : 0;
+uint8_t ButtonGeneral::pressedFor(uint32_t ms) {
+  return isPressed() && (_time - _lastChange >= ms);
 }
 
-uint8_t HWButton::pressedFor(uint32_t ms, uint32_t continuous_time) {
-  if (_state == 1 && _time - _lastChange >= ms && _time - _lastLongPress >= continuous_time) {
+uint8_t ButtonGeneral::pressedFor(uint32_t ms, uint32_t continuous_time) {
+  if (isPressed() && (_time - _lastChange >= ms) && (_time - _lastLongPress >= continuous_time)) {
     _lastLongPress = _time;
     return 1;
-  } 
+  }
   return 0;
 }
 
-uint8_t HWButton::releasedFor(uint32_t ms) {
-  return (_state == 0 && _time - _lastChange >= ms) ? 1 : 0;
+uint8_t ButtonGeneral::releasedFor(uint32_t ms) {
+  return isReleased() && (_time - _lastChange >= ms);
 }
 /*----------------------------------------------------------------------*
  * lastChange() returns the time the button last changed state,         *
  * in milliseconds.                                                     *
  *----------------------------------------------------------------------*/
-uint32_t HWButton::lastChange(void) {
+uint32_t ButtonGeneral::lastChange(void) {
   return _lastChange;
 }
